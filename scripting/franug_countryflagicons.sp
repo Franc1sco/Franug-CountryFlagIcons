@@ -28,7 +28,7 @@ char m_cFilePath[PLATFORM_MAX_PATH];
 KeyValues kv;
 
 
-#define DATA "1.0.1"
+#define DATA "1.0.2"
 
 public Plugin myinfo = 
 {
@@ -73,6 +73,11 @@ public OnClientPostAdminCheck(client)
 	
 	m_iLevel[client] = KvGetNum(kv, "index");
 	KvRewind(kv);
+}
+
+public void OnClientDisconnect(int client)
+{
+	m_iLevel[client] = -1;
 }
 
 
