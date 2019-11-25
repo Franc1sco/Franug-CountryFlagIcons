@@ -28,7 +28,7 @@ char m_cFilePath[PLATFORM_MAX_PATH];
 KeyValues kv;
 
 
-#define DATA "1.0"
+#define DATA "1.0.1"
 
 public Plugin myinfo = 
 {
@@ -60,8 +60,9 @@ public OnClientPostAdminCheck(client)
 	char ip[16];
 	char code2[3];
 	
-	GetClientIP(client, ip, sizeof(ip));
-	GeoipCode2(ip, code2);
+	if (!GetClientIP(client, ip, sizeof(ip)))return;
+	
+	if (!GeoipCode2(ip, code2))return;
 	
 	
 	if(!KvJumpToKey(kv, code2))
@@ -94,6 +95,8 @@ public void OnMapStart()
 		AddFileToDownloadsTable(sBuffer);
     	
 	} while (KvGotoNextKey(kv));
+	
+	KvRewind(kv);
 }
 
 public void OnThinkPost(int m_iEntity)
