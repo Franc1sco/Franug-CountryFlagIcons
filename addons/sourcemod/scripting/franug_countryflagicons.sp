@@ -32,7 +32,7 @@ KeyValues kv;
 
 bool g_bCustomLevels;
 
-#define DATA "1.2"
+#define DATA "1.2.1"
 
 public Plugin myinfo = 
 {
@@ -140,7 +140,7 @@ public void OnThinkPost(int m_iEntity)
 		{
 			if(m_iLevel[i] != m_iLevelTemp[i])
 			{
-				if (g_bCustomLevels && SCL_GetLevel(i) > -1)continue; // dont overwritte other custom level
+				if (g_bCustomLevels && SCL_GetLevel(i) > 0)continue; // dont overwritte other custom level
 				
 				SetEntData(m_iEntity, m_iOffset + (i * 4), m_iLevel[i]);
 			}
