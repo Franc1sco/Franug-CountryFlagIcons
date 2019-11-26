@@ -19,6 +19,9 @@
 #include <sdktools>
 #include <sdkhooks>
 #include <geoip>
+#undef REQUIRE_PLUGIN
+#include <ScoreboardCustomLevels>
+
 
 int m_iOffset = -1;
 int m_iLevel[MAXPLAYERS+1];
@@ -27,8 +30,9 @@ char m_cFilePath[PLATFORM_MAX_PATH];
 
 KeyValues kv;
 
+bool g_bCustomLevels;
 
-#define DATA "1.0.2"
+#define DATA "1.2"
 
 public Plugin myinfo = 
 {
@@ -39,6 +43,13 @@ public Plugin myinfo =
 	url = "http://steamcommunity.com/id/franug"
 };
 
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+	MarkNativeAsOptional("SCL_GetLevel");
+	
+	return APLRes_Success;
+}
+
 public void OnPluginStart()
 {
 	m_iOffset = FindSendPropInfo("CCSPlayerResource", "m_nPersonaDataPublicLevel");
@@ -48,6 +59,20 @@ public void OnPluginStart()
 	{
 		m_iLevel[i] = -1;
 	}
+	
+	g_bCustomLevels = LibraryExists("ScoreboardCustomLevels");
+}
+
+public void OnLibraryAdded(const char[] name)
+{
+	if(StrEqual(name, "ScoreboardCustomLevels"))
+		g_bCustomLevels = true;
+}
+
+public void OnLibraryRemoved(const char[] name)
+{
+	if(StrEqual(name, "ScoreboardCustomLevels"))
+		g_bCustomLevels = false;
 }
 
 public OnClientPostAdminCheck(client)
@@ -113,7 +138,12 @@ public void OnThinkPost(int m_iEntity)
 	{
 		if(m_iLevel[i] != -1)
 		{
-			if(m_iLevel[i] != m_iLevelTemp[i]) SetEntData(m_iEntity, m_iOffset + (i * 4), m_iLevel[i]);
+			if(m_iLevel[i] != m_iLevelTemp[i])
+			{
+				if (g_bCustomLevels && SCL_GetLevel(i) > -1)continue; // dont overwritte other custom level
+				
+				SetEntData(m_iEntity, m_iOffset + (i * 4), m_iLevel[i]);
+			}
 		}
 	}
 }
