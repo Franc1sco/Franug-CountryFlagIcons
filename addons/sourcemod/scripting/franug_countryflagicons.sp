@@ -32,7 +32,7 @@ KeyValues kv;
 
 bool g_bCustomLevels;
 
-#define DATA "1.2.1"
+#define DATA "1.3"
 
 public Plugin myinfo = 
 {
@@ -85,13 +85,26 @@ public OnClientPostAdminCheck(client)
 	char ip[16];
 	char code2[3];
 	
-	if (!GetClientIP(client, ip, sizeof(ip)))return;
-	
-	if (!GeoipCode2(ip, code2))return;
+	if (!GetClientIP(client, ip, sizeof(ip)) || !GeoipCode2(ip, code2))
+	{
+		if(KvJumpToKey(kv, "UNKNOW"))
+		{
+			m_iLevel[client] = KvGetNum(kv, "index");
+		}
+		
+		KvRewind(kv);
+		return;
+	}
 	
 	
 	if(!KvJumpToKey(kv, code2))
 	{
+		KvRewind(kv);
+		if(KvJumpToKey(kv, "UNKNOW"))
+		{
+			m_iLevel[client] = KvGetNum(kv, "index");
+		}
+		
 		KvRewind(kv);
 		return;
 	}
