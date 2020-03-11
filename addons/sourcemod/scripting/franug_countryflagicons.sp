@@ -1,6 +1,6 @@
 /*  SM Franug Country Flag Icons
  *
- *  Copyright (C) 2019 Francisco 'Franc1sco' García
+ *  Copyright (C) 2019-2020 Francisco 'Franc1sco' García
  * 
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -18,7 +18,7 @@
 #include <sourcemod>
 #include <sdktools>
 #include <sdkhooks>
-#include <geoip>
+#include <sxgeo>
 #undef REQUIRE_PLUGIN
 #include <ScoreboardCustomLevels>
 
@@ -32,7 +32,7 @@ KeyValues kv;
 
 bool g_bCustomLevels;
 
-#define DATA "1.3"
+#define DATA "1.3 SxGeo version"
 
 public Plugin myinfo = 
 {
@@ -85,7 +85,7 @@ public OnClientPostAdminCheck(client)
 	char ip[16];
 	char code2[3];
 	
-	if (!GetClientIP(client, ip, sizeof(ip)) || !GeoipCode2(ip, code2))
+	if (!GetClientIP(client, ip, sizeof(ip)) || !SxGeoCode(ip, code2))
 	{
 		if(KvJumpToKey(kv, "UNKNOW"))
 		{
