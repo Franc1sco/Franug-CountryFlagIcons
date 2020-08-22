@@ -34,7 +34,7 @@ char m_cFilePath[PLATFORM_MAX_PATH];
 KeyValues kv;
 
 bool g_bCustomLevels;
-bool g_hShowflag[MAXPLAYERS + 1] = {false, ...};
+bool g_hShowflag[MAXPLAYERS + 1] = {true, ...};
 
 #define DATA "1.3"
 
@@ -144,7 +144,7 @@ public Action Cmd_Showflag(int client, int args)
 		else
 		{
 			cookieValue = 1;
-			g_hShowflag[client] = false;
+			g_hShowflag[client] = true;
 			IntToString(cookieValue, sCookieValue, sizeof(sCookieValue));
 			SetClientCookie(client, hShowFlagCookie, sCookieValue);
 			OnClientPostAdminCheck(client);
@@ -175,6 +175,19 @@ public void OnMapStart()
 	} while (KvGotoNextKey(kv));
 	
 	KvRewind(kv);
+}
+
+public void OnClientCookiesCached(int client)
+{
+	char sCookieValue[12];
+	GetClientCookie(client, hShowFlagCookie, sCookieValue, sizeof(sCookieValue));
+	int cookieValue = StringToInt(sCookieValue);
+	if (cookieValue == 0)
+	{
+		g_hShowflag[client] = false;
+		OnClientPostAdminCheck(client);
+	}
+	return;
 }
 
 public void OnThinkPost(int m_iEntity)
