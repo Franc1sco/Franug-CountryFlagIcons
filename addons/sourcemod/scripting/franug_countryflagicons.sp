@@ -181,6 +181,11 @@ public void OnClientCookiesCached(int client)
 {
 	char sCookieValue[12];
 	GetClientCookie(client, hShowFlagCookie, sCookieValue, sizeof(sCookieValue));
+	if (StrEqual(sCookieValue, ""))
+	{
+		sCookieValue = "1"
+		SetClientCookie(client, hShowFlagCookie, sCookieValue);
+	}
 	int cookieValue = StringToInt(sCookieValue);
 	if (cookieValue == 0)
 	{
