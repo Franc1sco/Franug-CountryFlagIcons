@@ -107,8 +107,6 @@ public OnClientPostAdminCheck(client)
 
 	if(IsLocalAddress(ip))
 	{
-		
-
 		GeoipCode2(serverIp, code2);
 	}
 	
