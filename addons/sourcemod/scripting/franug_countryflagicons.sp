@@ -23,20 +23,22 @@
 #include <ScoreboardCustomLevels>
 #include <clientprefs>
 
-
 int m_iOffset = -1;
 int m_iLevel[MAXPLAYERS+1];
 
 Handle hShowFlagCookie;
 
 char m_cFilePath[PLATFORM_MAX_PATH];
+char serverIp[16];
 
 KeyValues kv;
 
 bool g_bCustomLevels;
 bool g_hShowflag[MAXPLAYERS + 1] = {true, ...};
 
-#define DATA "1.3"
+ConVar net_public_adr = null;
+
+#define DATA "1.4"
 
 public Plugin myinfo = 
 {
@@ -56,6 +58,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
+	net_public_adr = FindConVar("net_public_adr");
+
 	m_iOffset = FindSendPropInfo("CCSPlayerResource", "m_nPersonaDataPublicLevel");
 	BuildPath(Path_SM, m_cFilePath, sizeof(m_cFilePath), "configs/franug_countryflags.cfg");
 
@@ -68,6 +72,11 @@ public void OnPluginStart()
 	}
 	
 	g_bCustomLevels = LibraryExists("ScoreboardCustomLevels");
+}
+
+public void OnConfigsExecuted()
+{
+	net_public_adr.GetString(serverIp, sizeof(serverIp));
 }
 
 public void OnLibraryAdded(const char[] name)
@@ -92,7 +101,7 @@ public OnClientPostAdminCheck(client)
 	char ip[16];
 	char code2[3];
 	
-	if (!GetClientIP(client, ip, sizeof(ip)) || !GeoipCode2(ip, code2) || !g_hShowflag[client])
+	if (!GetClientIP(client, ip, sizeof(ip)) || !IsLocalAddress(ip) && !GeoipCode2(ip, code2) || !g_hShowflag[client])
 	{
 		if(KvJumpToKey(kv, "UNKNOW"))
 		{
@@ -102,7 +111,11 @@ public OnClientPostAdminCheck(client)
 		KvRewind(kv);
 		return;
 	}
-	
+
+	if(IsLocalAddress(ip))
+	{
+		GeoipCode2(serverIp, code2);
+	}
 	
 	if(!KvJumpToKey(kv, code2))
 	{
@@ -212,4 +225,28 @@ public void OnThinkPost(int m_iEntity)
 			}
 		}
 	}
+}
+
+stock bool IsLocalAddress(const char ip[16])
+{
+	// 192.168.0.0 - 192.168.255.255 (65,536 IP addresses)
+	// 10.0.0.0 - 10.255.255.255 (16,777,216 IP addresses)
+	if(StrContains(ip, "192.168", false) > -1 || StrContains(ip, "10.", false) > -1)
+	{
+		return true;
+	}
+
+	// 172.16.0.0 - 172.31.255.255 (1,048,576 IP addresses)
+	char octets[4][3];
+	if(ExplodeString(ip, ".", octets, 4, 3) == 4)
+	{
+		if(StrContains(octets[0], "172", false) > -1)
+		{
+			int octet = StringToInt(octets[1]);
+			
+			return (!(octet < 16) || !(octet > 31));
+		}
+	}
+
+	return false;
 }
