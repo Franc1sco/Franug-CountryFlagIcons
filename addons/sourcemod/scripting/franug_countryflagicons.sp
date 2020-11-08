@@ -19,6 +19,7 @@
 #include <sdktools>
 #include <sdkhooks>
 #include <geoip>
+#include <clientprefs>
 #undef REQUIRE_PLUGIN
 #include <ScoreboardCustomLevels>
 
@@ -31,10 +32,13 @@ char serverIp[16];
 KeyValues kv;
 
 bool g_bCustomLevels;
+bool g_hShowflag[MAXPLAYERS + 1] = {true, ...};
 
 ConVar net_public_adr = null;
 
 #define DATA "1.4"
+
+Handle hShowFlagCookie;
 
 public Plugin myinfo = 
 {
@@ -58,6 +62,9 @@ public void OnPluginStart()
 
 	m_iOffset = FindSendPropInfo("CCSPlayerResource", "m_nPersonaDataPublicLevel");
 	BuildPath(Path_SM, m_cFilePath, sizeof(m_cFilePath), "configs/franug_countryflags.cfg");
+	
+	RegConsoleCmd("sm_showflag", Cmd_Showflag, "This allows players to hide their flag");
+	hShowFlagCookie = RegClientCookie("Flags-Icons_No_Flags_Cookie", "Show or hide the flag.", CookieAccess_Private);
 	
 	for(int i = 1; i <= MaxClients; i++)
 	{
@@ -94,7 +101,7 @@ public OnClientPostAdminCheck(client)
 	char ip[16];
 	char code2[3];
 	
-	if (!GetClientIP(client, ip, sizeof(ip)) || !IsLocalAddress(ip) && !GeoipCode2(ip, code2))
+	if (!GetClientIP(client, ip, sizeof(ip)) || !IsLocalAddress(ip) && !GeoipCode2(ip, code2) || !g_hShowflag[client])
 	{
 		if(KvJumpToKey(kv, "UNKNOW"))
 		{
@@ -171,6 +178,53 @@ public void OnThinkPost(int m_iEntity)
 			}
 		}
 	}
+}
+
+public Action Cmd_Showflag(int client, int args)
+{
+	if (AreClientCookiesCached(client))
+	{
+		char sCookieValue[12];
+		GetClientCookie(client, hShowFlagCookie, sCookieValue, sizeof(sCookieValue));
+		int cookieValue = StringToInt(sCookieValue);
+		if (cookieValue == 1)
+		{
+			cookieValue = 0;
+			g_hShowflag[client] = false;
+			IntToString(cookieValue, sCookieValue, sizeof(sCookieValue));
+			SetClientCookie(client, hShowFlagCookie, sCookieValue);
+			OnClientPostAdminCheck(client);
+			ReplyToCommand(client, "[SM] Your flag is no longer visible");
+		}
+		else
+		{
+			cookieValue = 1;
+			g_hShowflag[client] = true;
+			IntToString(cookieValue, sCookieValue, sizeof(sCookieValue));
+			SetClientCookie(client, hShowFlagCookie, sCookieValue);
+			OnClientPostAdminCheck(client);
+			ReplyToCommand(client, "[SM] Your flag is now visible");
+		}
+	}
+	return Plugin_Handled;
+}
+
+public void OnClientCookiesCached(int client)
+{
+	char sCookieValue[12];
+	GetClientCookie(client, hShowFlagCookie, sCookieValue, sizeof(sCookieValue));
+	if (StrEqual(sCookieValue, ""))
+	{
+		sCookieValue = "1"
+		SetClientCookie(client, hShowFlagCookie, sCookieValue);
+	}
+	int cookieValue = StringToInt(sCookieValue);
+	if (cookieValue == 0)
+	{
+		g_hShowflag[client] = false;
+		OnClientPostAdminCheck(client);
+	}
+	return;
 }
 
 stock bool IsLocalAddress(const char ip[16])
