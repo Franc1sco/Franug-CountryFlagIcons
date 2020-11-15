@@ -148,20 +148,20 @@ public Action Cmd_Showflag(int client, int args)
 		if (cookieValue == 1)
 		{
 			cookieValue = 0;
-			g_hShowflag[client] = false;
-			IntToString(cookieValue, sCookieValue, sizeof(sCookieValue));
-			SetClientCookie(client, hShowFlagCookie, sCookieValue);
-			OnClientPostAdminCheck(client);
-			ReplyToCommand(client, "[SM] Your flag is no longer visible");
-		}
-		else
-		{
-			cookieValue = 1;
 			g_hShowflag[client] = true;
 			IntToString(cookieValue, sCookieValue, sizeof(sCookieValue));
 			SetClientCookie(client, hShowFlagCookie, sCookieValue);
 			OnClientPostAdminCheck(client);
 			ReplyToCommand(client, "[SM] Your flag is now visible");
+		}
+		else
+		{
+			cookieValue = 1;
+			g_hShowflag[client] = false;
+			IntToString(cookieValue, sCookieValue, sizeof(sCookieValue));
+			SetClientCookie(client, hShowFlagCookie, sCookieValue);
+			OnClientPostAdminCheck(client);
+			ReplyToCommand(client, "[SM] Your flag is no longer visible");
 		}
 	}
 	return Plugin_Handled;
@@ -202,7 +202,7 @@ public void OnClientCookiesCached(int client)
 	int cookieValue = StringToInt(sCookieValue);
 	if (cookieValue == 0)
 	{
-		g_hShowflag[client] = false;
+		g_hShowflag[client] = true;
 		OnClientPostAdminCheck(client);
 	}
 	return;
