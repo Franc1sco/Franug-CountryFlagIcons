@@ -1,6 +1,6 @@
 /*  SM Franug Country Flag Icons
  *
- *  Copyright (C) 2019 Francisco 'Franc1sco' García
+ *  Copyright (C) 2019-2023 Francisco 'Franc1sco' García
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -26,7 +26,7 @@
 int m_iOffset = -1;
 int m_iLevel[MAXPLAYERS+1];
 
-Handle hShowFlagCookie;
+Cookie hShowFlagCookie;
 
 char m_cFilePath[PLATFORM_MAX_PATH];
 char serverIp[16];
@@ -38,7 +38,7 @@ bool g_hShowflag[MAXPLAYERS + 1] = {true, ...};
 
 ConVar net_public_adr = null;
 
-#define DATA "1.4"
+#define DATA "1.4.1"
 
 public Plugin myinfo =
 {
@@ -64,7 +64,7 @@ public void OnPluginStart()
 	BuildPath(Path_SM, m_cFilePath, sizeof(m_cFilePath), "configs/franug_countryflags.cfg");
 
 	RegConsoleCmd("sm_showflag", Cmd_Showflag, "This allows players to hide their flag");
-	hShowFlagCookie = RegClientCookie("Flags-Icons_No_Flags_Cookie", "Show or hide the flag.", CookieAccess_Private);
+	hShowFlagCookie = new Cookie("Flags-Icons_No_Flags_Cookie", "Show or hide the flag.", CookieAccess_Private);
 
 	for(int i = 1; i <= MaxClients; i++)
 	{
@@ -103,12 +103,12 @@ public OnClientPostAdminCheck(client)
 
 	if (!GetClientIP(client, ip, sizeof(ip)) || !IsLocalAddress(ip) && !GeoipCode2(ip, code2) || !g_hShowflag[client])
 	{
-		if(KvJumpToKey(kv, "UNKNOW"))
+		if(kv.JumpToKey("UNKNOWN"))
 		{
-			m_iLevel[client] = KvGetNum(kv, "index");
+			m_iLevel[client] = kv.GetNum("index");
 		}
 
-		KvRewind(kv);
+		kv.Rewind();
 		return;
 	}
 
@@ -117,20 +117,20 @@ public OnClientPostAdminCheck(client)
 		GeoipCode2(serverIp, code2);
 	}
 
-	if(!KvJumpToKey(kv, code2))
+	if(!kv.JumpToKey(code2))
 	{
-		KvRewind(kv);
-		if(KvJumpToKey(kv, "UNKNOW"))
+		kv.Rewind();
+		if(kv.JumpToKey("UNKNOWN"))
 		{
-			m_iLevel[client] = KvGetNum(kv, "index");
+			m_iLevel[client] = kv.GetNum("index");
 		}
 
-		KvRewind(kv);
+		kv.Rewind();
 		return;
 	}
 
-	m_iLevel[client] = KvGetNum(kv, "index");
-	KvRewind(kv);
+	m_iLevel[client] = kv.GetNum("index");
+	kv.Rewind();
 }
 
 public void OnClientDisconnect(int client)
@@ -143,14 +143,14 @@ public Action Cmd_Showflag(int client, int args)
 	if (AreClientCookiesCached(client))
 	{
 		char sCookieValue[12];
-		GetClientCookie(client, hShowFlagCookie, sCookieValue, sizeof(sCookieValue));
+		hShowFlagCookie.Get(client, sCookieValue, sizeof(sCookieValue));
 		int cookieValue = StringToInt(sCookieValue);
 		if (cookieValue == 1)
 		{
 			cookieValue = 0;
 			g_hShowflag[client] = true;
 			IntToString(cookieValue, sCookieValue, sizeof(sCookieValue));
-			SetClientCookie(client, hShowFlagCookie, sCookieValue);
+			hShowFlagCookie.Set(client, sCookieValue);
 			OnClientPostAdminCheck(client);
 			ReplyToCommand(client, "[SM] Your flag is now visible");
 		}
@@ -159,7 +159,7 @@ public Action Cmd_Showflag(int client, int args)
 			cookieValue = 1;
 			g_hShowflag[client] = false;
 			IntToString(cookieValue, sCookieValue, sizeof(sCookieValue));
-			SetClientCookie(client, hShowFlagCookie, sCookieValue);
+			hShowFlagCookie.Set(client, sCookieValue);
 			OnClientPostAdminCheck(client);
 			ReplyToCommand(client, "[SM] Your flag is no longer visible");
 		}
@@ -175,19 +175,19 @@ public void OnMapStart()
 
 	if (kv != null)kv.Close();
 
-	kv = CreateKeyValues("CountryFlags");
-	FileToKeyValues(kv, m_cFilePath);
+	kv = new KeyValues("CountryFlags");
+	kv.ImportFromFile(m_cFilePath);
 
-	if (!KvGotoFirstSubKey(kv)) return;
+	if (!kv.GotoFirstSubKey()) return;
 
 	do
 	{
-		Format(sBuffer, sizeof(sBuffer), "materials/panorama/images/icons/xp/level%i.png", KvGetNum(kv, "index"));
+		Format(sBuffer, sizeof(sBuffer), "materials/panorama/images/icons/xp/level%i.png", kv.GetNum("index"));
 		AddFileToDownloadsTable(sBuffer);
 
-	} while (KvGotoNextKey(kv));
+	} while (kv.GotoNextKey());
 
-	KvRewind(kv);
+	kv.Rewind();
 }
 
 public void OnClientCookiesCached(int client)
@@ -210,8 +210,8 @@ public void OnClientCookiesCached(int client)
 
 public void OnThinkPost(int m_iEntity)
 {
-	int m_iLevelTemp[MAXPLAYERS+1] = 0;
-	GetEntDataArray(m_iEntity, m_iOffset, m_iLevelTemp, MAXPLAYERS+1);
+	int m_iLevelTemp[MAXPLAYERS+1] = {0, ...};
+	GetEntDataArray(m_iEntity, m_iOffset, m_iLevelTemp, sizeof(m_iLevelTemp));
 
 	for(int i = 1; i <= MaxClients; i++)
 	{
